@@ -1,16 +1,15 @@
 import { Router, Request, Response, RequestHandler } from "express";
 import db from "../database";
 
-// Cria uma instância do Router
 const router = Router();
 
-// Define a rota GET com tipagem explícita usando RequestHandler
+// GET treinos
 router.get("/", ((req: Request, res: Response) => {
   const rows = db.prepare("SELECT * FROM treinos ORDER BY data DESC").all();
   res.json(rows);
 }) as RequestHandler);
 
-// Define a rota POST com tipagem explícita usando RequestHandler
+// POST treino
 router.post("/", ((req: Request, res: Response) => {
   const { data, tipo } = req.body;
   if (!data || !["A", "B", "C"].includes(tipo)) {
@@ -20,5 +19,18 @@ router.post("/", ((req: Request, res: Response) => {
   res.status(201).json({ message: "Treino salvo" });
 }) as RequestHandler);
 
-// Exporta o router diretamente
+// DELETE treino por data
+router.delete("/:data", ((req: Request, res: Response) => {
+  const { data } = req.params;
+
+  const stmt = db.prepare("DELETE FROM treinos WHERE data = ?");
+  const result = stmt.run(data);
+
+  if (result.changes > 0) {
+    res.status(200).json({ message: "Treino removido" });
+  } else {
+    res.status(404).json({ error: "Treino não encontrado" });
+  }
+}) as RequestHandler);
+
 export default router;
